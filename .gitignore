@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment
+.venv/
+venv/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Environment variables
+.env
+
+# Cache and local files
+.cache
+
+# OS files
+.DS_Store
+
+# Editor directories
+.idea/
+.vscode/
+
+# Music used to train model
+music/
