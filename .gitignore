@@ -25,3 +25,4 @@ venv/
 
 # Music used to train model
 music/
+id_cache.json
