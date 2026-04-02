@@ -4,10 +4,8 @@ This repository contains a full Machine Learning pipeline to analyze MP3 feature
 
 ## Features
 - Complete dataset pipeline extracting 40+ musical features per track (MFCCs, spectral roll-off, zero-crossing rate).
-- AMD ROCm PyTorch integration for rapid, accelerated feature parsing.
 - Trained XGBoost classifier.
 - Real-time drag-and-drop song evaluation Streamlit Web UI.
-- Explainable AI using SHAP.
 
 ## Directory Structure
 - `src/`: Python scripts for feature extraction, model training, and predictions.
