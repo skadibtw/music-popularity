@@ -19,5 +19,5 @@ This repository contains a full Machine Learning pipeline to analyze MP3 feature
 
 Run the web app:
 ```bash
-.venv_torch\Scripts\streamlit.exe run app.py
+streamlit.exe run app.py
 ```
