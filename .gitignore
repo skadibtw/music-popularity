@@ -26,3 +26,4 @@ venv/
 # Music used to train model
 music/
 id_cache.json
+.venv_torch/
