@@ -1,105 +1,175 @@
 """
-Модель для предсказания успешности музыкальных треков
-Использует данные из Billboard и UK Charts с аудио-характеристиками
+Audio feature extraction and scoring helpers for chart-track hit-likeness analysis.
 """
 
-import pandas as pd
-import numpy as np
-import librosa
-import soundfile as sf
 import warnings
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import classification_report, confusion_matrix, roc_auc_score, accuracy_score
-import joblib
-import os
-from pathlib import Path
+import sys
 
-warnings.filterwarnings('ignore')
+import librosa
+import numpy as np
+import pandas as pd
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+warnings.filterwarnings("ignore")
+
+
+DEFAULT_PREVIEW_SECONDS = 30
+
+
+PITCH_CLASS = {
+    "C": 0,
+    "C#": 1,
+    "D": 2,
+    "D#": 3,
+    "E": 4,
+    "F": 5,
+    "F#": 6,
+    "G": 7,
+    "G#": 8,
+    "A": 9,
+    "A#": 10,
+    "B": 11,
+}
+
+
+def add_key_features(df):
+    """Represent musical key as circular pitch-class features plus mode."""
+    key_parts = df["key"].fillna("C major").str.split(" ", n=1, expand=True)
+    root = key_parts[0].map(PITCH_CLASS).fillna(0).astype(float)
+    if key_parts.shape[1] > 1:
+        mode = key_parts[1].fillna("major")
+    else:
+        mode = pd.Series("major", index=df.index)
+    radians = 2 * np.pi * root / 12
+    df["key_root_sin"] = np.sin(radians)
+    df["key_root_cos"] = np.cos(radians)
+    df["key_is_minor"] = mode.eq("minor").astype(int)
+    return df
+
+
+def score_percentile(raw_score, metadata):
+    """Map a model score to its percentile among out-of-fold reference scores."""
+    reference_scores = np.asarray(metadata.get("oof_scores", []), dtype=float)
+    if reference_scores.size == 0:
+        return float(raw_score * 100)
+    return float((reference_scores <= raw_score).mean() * 100)
+
+
+def robust_feature_distance(row, metadata):
+    """Estimate whether a song is inside the training feature distribution."""
+    medians = metadata.get("feature_median", {})
+    iqrs = metadata.get("feature_iqr", {})
+    if not medians or not iqrs:
+        return 0.0, 0.0, True
+
+    values = row[list(medians.keys())].iloc[0].astype(float)
+    median = pd.Series(medians, dtype=float)
+    iqr = pd.Series(iqrs, dtype=float).replace(0, 1.0)
+    distance = float(((values - median).abs() / iqr).mean())
+    threshold = float(metadata.get("ood_distance_p95", distance))
+    return distance, threshold, distance <= threshold
+
+
+def charted_similarity_percentile(row, metadata):
+    """Score closeness to the weighted charted audio-feature reference distribution."""
+    medians = metadata.get("charted_feature_median", {})
+    iqrs = metadata.get("charted_feature_iqr", {})
+    reference_distances = np.asarray(metadata.get("charted_reference_distances", []), dtype=float)
+    if not medians or not iqrs or reference_distances.size == 0:
+        return 0.0, 0.0
+
+    values = row[list(medians.keys())].iloc[0].astype(float)
+    median = pd.Series(medians, dtype=float)
+    iqr = pd.Series(iqrs, dtype=float).replace(0, 1.0)
+    distance = float(((values - median).abs() / iqr).mean())
+    percentile = float((reference_distances >= distance).mean() * 100)
+    return percentile, distance
 
 
 class AudioFeatureExtractor:
-    """Извлечение расширенного набора аудио-фич из MP3 файлов"""
-    
+    """Extract a compact audio-feature set from MP3/WAV files."""
+
+    def _load_preview_audio(audio_path, preview_seconds=30):
+        """Load the same fixed preview window for every source to reduce duration/source bias."""
+        return librosa.load(audio_path, mono=True, duration=preview_seconds)
+
     @staticmethod
-    def extract_features(audio_path):
-        """
-        Извлекает аудио-характеристики из файла
-        
-        Returns:
-            dict: словарь с фичами
-        """
+    def get_duration(audio_path):
         try:
-            # Загружаем аудио
-            y, sr = librosa.load(audio_path, mono=True, duration=30)
-            
+            return float(librosa.get_duration(path=audio_path))
+        except TypeError:
+            return float(librosa.get_duration(filename=audio_path))
+
+    @staticmethod
+    def extract_features(
+        audio_path,
+        preview_seconds=DEFAULT_PREVIEW_SECONDS,
+    ):
+        """Extract audio features from a local file."""
+        try:
+            y, sr = AudioFeatureExtractor._load_preview_audio(audio_path, preview_seconds)
+
             features = {}
-            
-            # 1. Темп (BPM)
+            features["duration_seconds"] = AudioFeatureExtractor.get_duration(audio_path)
+            features["analyzed_duration_seconds"] = float(len(y) / sr) if sr else 0.0
+
             tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-            features['tempo'] = float(tempo)
-            
-            # 2. Тональность
+            features["tempo"] = float(tempo)
+
             chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
-            key = AudioFeatureExtractor._estimate_key(chroma)
-            features['key'] = key
-            
-            # 3. Спектральные характеристики
+            features["key"] = AudioFeatureExtractor._estimate_key(chroma)
+
             spectral_centroids = librosa.feature.spectral_centroid(y=y, sr=sr)[0]
-            features['spectral_centroid_mean'] = float(np.mean(spectral_centroids))
-            features['spectral_centroid_std'] = float(np.std(spectral_centroids))
-            
+            features["spectral_centroid_mean"] = float(np.mean(spectral_centroids))
+            features["spectral_centroid_std"] = float(np.std(spectral_centroids))
+
             spectral_rolloff = librosa.feature.spectral_rolloff(y=y, sr=sr)[0]
-            features['spectral_rolloff_mean'] = float(np.mean(spectral_rolloff))
-            
+            features["spectral_rolloff_mean"] = float(np.mean(spectral_rolloff))
+
             spectral_bandwidth = librosa.feature.spectral_bandwidth(y=y, sr=sr)[0]
-            features['spectral_bandwidth_mean'] = float(np.mean(spectral_bandwidth))
-            
-            # 4. Zero Crossing Rate (мера перкуссивности)
+            features["spectral_bandwidth_mean"] = float(np.mean(spectral_bandwidth))
+
             zcr = librosa.feature.zero_crossing_rate(y)[0]
-            features['zcr_mean'] = float(np.mean(zcr))
-            features['zcr_std'] = float(np.std(zcr))
-            
-            # 5. MFCC (Mel-frequency cepstral coefficients) - тембральные характеристики
+            features["zcr_mean"] = float(np.mean(zcr))
+            features["zcr_std"] = float(np.std(zcr))
+
             mfccs = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13)
             for i in range(13):
-                features[f'mfcc_{i}_mean'] = float(np.mean(mfccs[i]))
-                features[f'mfcc_{i}_std'] = float(np.std(mfccs[i]))
-            
-            # 6. Chroma features (гармонические характеристики)
+                features[f"mfcc_{i}_mean"] = float(np.mean(mfccs[i]))
+                features[f"mfcc_{i}_std"] = float(np.std(mfccs[i]))
+
             chroma_stft = librosa.feature.chroma_stft(y=y, sr=sr)
-            features['chroma_mean'] = float(np.mean(chroma_stft))
-            features['chroma_std'] = float(np.std(chroma_stft))
-            
-            # 7. RMS Energy (громкость/энергия)
+            features["chroma_mean"] = float(np.mean(chroma_stft))
+            features["chroma_std"] = float(np.std(chroma_stft))
+
             rms = librosa.feature.rms(y=y)[0]
-            features['rms_mean'] = float(np.mean(rms))
-            features['rms_std'] = float(np.std(rms))
-            
-            # 8. Tonnetz (тональное пространство)
+            features["rms_mean"] = float(np.mean(rms))
+            features["rms_std"] = float(np.std(rms))
+
             tonnetz = librosa.feature.tonnetz(y=librosa.effects.harmonic(y), sr=sr)
-            features['tonnetz_mean'] = float(np.mean(tonnetz))
-            features['tonnetz_std'] = float(np.std(tonnetz))
-            
+            features["tonnetz_mean"] = float(np.mean(tonnetz))
+            features["tonnetz_std"] = float(np.std(tonnetz))
+
             return features
-            
+
         except Exception as e:
-            print(f"Ошибка при обработке {audio_path}: {e}")
+            print(f"Failed to process {audio_path}: {e}")
             return None
-    
+
     @staticmethod
     def _estimate_key(chroma):
-        """Определяет тональность по хромаграмме"""
-        # Профили Крамхансла
-        MAJOR_PROFILE = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
-        MINOR_PROFILE = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
-        NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-        
-        # Нормализация
+        """Estimate musical key from a chromagram using Krumhansl profiles."""
+        major_profile = np.array([6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88])
+        minor_profile = np.array([6.33, 2.68, 3.52, 5.38, 2.60, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17])
+        notes = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+
         chroma = chroma / (chroma.sum(axis=0, keepdims=True) + 1e-9)
         pitch_profile = chroma.mean(axis=1)
-        
+
         def best_match(profile):
             scores = []
             p = profile / profile.sum()
@@ -107,224 +177,10 @@ class AudioFeatureExtractor:
                 scores.append(np.corrcoef(p, np.roll(pitch_profile, i))[0, 1])
             key_index = int(np.argmax(scores))
             return key_index, float(np.max(scores))
-        
-        maj_root, maj_score = best_match(MAJOR_PROFILE)
-        min_root, min_score = best_match(MINOR_PROFILE)
-        
-        if maj_score >= min_score:
-            return f"{NOTES[maj_root]} major"
-        else:
-            return f"{NOTES[min_root]} minor"
 
+        major_root, major_score = best_match(major_profile)
+        minor_root, minor_score = best_match(minor_profile)
 
-class MusicSuccessPredictor:
-    """Модель для предсказания успешности музыкальных треков"""
-    
-    def __init__(self, model_path='models/music_success_model.pkl', scaler_path='models/music_scaler.pkl'):
-        self.model = None
-        self.scaler = None
-        self.feature_names = None
-        self.label_encoder = LabelEncoder()
-        self.model_path = model_path
-        self.scaler_path = scaler_path
-        
-    def prepare_data(self, df_path='data/processed/tracks_with_features.csv'):
-        """
-        Подготовка данных для обучения
-        Создает целевую переменную: успех = топ-20, неуспех = 21+
-        """
-        print("Загрузка данных...")
-        df = pd.read_csv(df_path)
-        
-        print(f"Всего записей: {len(df)}")
-        print(f"Колонки: {df.columns.tolist()}")
-        
-        # Создаем целевую переменную: 1 = успех (топ-20), 0 = менее успешный
-        df['success'] = (df['rank'] <= 20).astype(int)
-        
-        print(f"\nРаспределение успешных треков:")
-        print(df['success'].value_counts())
-        
-        # Удаляем строки с пропущенными значениями в ключевых колонках
-        df = df.dropna(subset=['tempo', 'key'])
-        
-        # Парсим темп (может быть в формате '[129.19921875]')
-        if df['tempo'].dtype == 'object':
-            df['tempo'] = df['tempo'].apply(lambda x: float(str(x).strip('[]')) if pd.notna(x) else np.nan)
-        
-        # Кодируем тональность
-        df['key_encoded'] = self.label_encoder.fit_transform(df['key'])
-        
-        print(f"\nПосле очистки: {len(df)} записей")
-        
-        return df
-    
-    def train_model(self, df_path='data/processed/tracks_with_features.csv'):
-        """Обучение модели на существующих данных"""
-        
-        df = self.prepare_data(df_path)
-        
-        # Базовые фичи (темп и тональность)
-        feature_cols = ['tempo', 'key_encoded']
-        self.feature_names = feature_cols
-        
-        X = df[feature_cols].values
-        y = df['success'].values
-        
-        # Разделение на train/test
-        X_train, X_test, y_train, y_test = train_test_split(
-            X, y, test_size=0.2, random_state=42, stratify=y
-        )
-        
-        # Нормализация
-        self.scaler = StandardScaler()
-        X_train_scaled = self.scaler.fit_transform(X_train)
-        X_test_scaled = self.scaler.transform(X_test)
-        
-        # Обучение модели
-        print("\nОбучение модели...")
-        self.model = GradientBoostingClassifier(
-            n_estimators=100,
-            learning_rate=0.1,
-            max_depth=5,
-            random_state=42
-        )
-        self.model.fit(X_train_scaled, y_train)
-        
-        # Оценка
-        y_pred = self.model.predict(X_test_scaled)
-        y_pred_proba = self.model.predict_proba(X_test_scaled)[:, 1]
-        
-        print("\n" + "="*50)
-        print("РЕЗУЛЬТАТЫ ОБУЧЕНИЯ")
-        print("="*50)
-        print(f"\nAccuracy: {accuracy_score(y_test, y_pred):.4f}")
-        print(f"ROC-AUC: {roc_auc_score(y_test, y_pred_proba):.4f}")
-        print("\nClassification Report:")
-        print(classification_report(y_test, y_pred, target_names=['Неуспешный', 'Успешный']))
-        
-        # Важность признаков
-        print("\nВажность признаков:")
-        for name, importance in zip(self.feature_names, self.model.feature_importances_):
-            print(f"  {name}: {importance:.4f}")
-        
-        # Сохранение модели
-        self.save_model()
-        
-        return self.model, self.scaler
-    
-    def predict_from_file(self, audio_path):
-        """
-        Предсказание успешности трека из MP3 файла
-        
-        Args:
-            audio_path: путь к MP3 файлу
-            
-        Returns:
-            dict: процент вероятности успеха и детали
-        """
-        if self.model is None:
-            self.load_model()
-        
-        print(f"\nАнализ файла: {audio_path}")
-        print("-" * 50)
-        
-        # Извлекаем фичи
-        features = AudioFeatureExtractor.extract_features(audio_path)
-        if features is None:
-            return {"error": "Не удалось извлечь характеристики из файла"}
-        
-        # Кодируем тональность
-        try:
-            key_encoded = self.label_encoder.transform([features['key']])[0]
-        except:
-            # Если тональность не встречалась при обучении, используем среднее
-            key_encoded = len(self.label_encoder.classes_) // 2
-        
-        # Подготавливаем фичи для предсказания
-        X = np.array([[features['tempo'], key_encoded]])
-        X_scaled = self.scaler.transform(X)
-        
-        # Предсказание
-        success_probability = self.model.predict_proba(X_scaled)[0, 1]
-        prediction = self.model.predict(X_scaled)[0]
-        
-        result = {
-            'success_probability': float(success_probability * 100),
-            'prediction': 'Успешный трек' if prediction == 1 else 'Менее успешный трек',
-            'features': {
-                'tempo': features['tempo'],
-                'key': features['key'],
-                'spectral_centroid_mean': features.get('spectral_centroid_mean', 'N/A'),
-                'zcr_mean': features.get('zcr_mean', 'N/A'),
-                'rms_mean': features.get('rms_mean', 'N/A')
-            }
-        }
-        
-        return result
-    
-    def save_model(self):
-        """Сохранение модели и scaler"""
-        joblib.dump(self.model, self.model_path)
-        joblib.dump(self.scaler, self.scaler_path)
-        joblib.dump(self.label_encoder, 'models/key_encoder.pkl')
-        print(f"\n✓ Модель сохранена: {self.model_path}")
-        print(f"✓ Scaler сохранен: {self.scaler_path}")
-        print(f"✓ Encoder сохранен: key_encoder.pkl")
-    
-    def load_model(self):
-        """Загрузка сохраненной модели"""
-        if os.path.exists(self.model_path):
-            self.model = joblib.load(self.model_path)
-            self.scaler = joblib.load(self.scaler_path)
-            self.label_encoder = joblib.load('models/key_encoder.pkl')
-            self.feature_names = ['tempo', 'key_encoded']
-            print("✓ Модель загружена")
-        else:
-            raise FileNotFoundError(f"Модель не найдена: {self.model_path}")
-
-
-def main():
-    """Основная функция для обучения и демонстрации"""
-    
-    predictor = MusicSuccessPredictor()
-    
-    # Обучение модели
-    if not os.path.exists('models/music_success_model.pkl'):
-        print("=" * 70)
-        print("ОБУЧЕНИЕ МОДЕЛИ")
-        print("=" * 70)
-        predictor.train_model('data/processed/tracks_with_features.csv')
-    else:
-        predictor.load_model()
-        print("Модель уже обучена и загружена")
-    
-    # Демонстрация предсказания на примерах из папки music
-    print("\n" + "=" * 70)
-    print("ДЕМОНСТРАЦИЯ ПРЕДСКАЗАНИЙ")
-    print("=" * 70)
-    
-    music_dir = Path('music')
-    if music_dir.exists():
-        mp3_files = list(music_dir.glob('*.mp3'))[:5]  # Берем первые 5 файлов для демо
-        
-        for audio_file in mp3_files:
-            result = predictor.predict_from_file(str(audio_file))
-            
-            if 'error' not in result:
-                print(f"\nФайл: {audio_file.name}")
-                print(f"Вероятность успеха: {result['success_probability']:.2f}%")
-                print(f"Предсказание: {result['prediction']}")
-                print(f"Темп: {result['features']['tempo']:.1f} BPM")
-                print(f"Тональность: {result['features']['key']}")
-    else:
-        print("Папка 'music' не найдена")
-    
-    print("\n" + "=" * 70)
-    print("Готово! Используйте predictor.predict_from_file('путь_к_файлу.mp3')")
-    print("для анализа новых треков")
-    print("=" * 70)
-
-
-if __name__ == "__main__":
-    main()
+        if major_score >= minor_score:
+            return f"{notes[major_root]} major"
+        return f"{notes[minor_root]} minor"

@@ -15,6 +15,11 @@ venv/
 
 # Cache and local files
 .cache
+.ruff_cache/
+
+# Local agent tooling
+.agents/
+skills-lock.json
 
 # OS files
 .DS_Store
@@ -27,3 +32,5 @@ venv/
 music/
 id_cache.json
 .venv_torch/
+testenv/
+yt-dlp.exe

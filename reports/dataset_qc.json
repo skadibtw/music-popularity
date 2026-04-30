@@ -1,0 +1,130 @@
+{
+  "dataset": {
+    "rows_extracted": 3975,
+    "target_counts": {
+      "0": 1979,
+      "1": 1996
+    },
+    "label_source_counts": {
+      "charted": 1996,
+      "archive_low_download": 1979
+    },
+    "popularity_tier_counts": {
+      "low_stream": 1979,
+      "chart_51_100": 926,
+      "top20": 541,
+      "chart_21_50": 529
+    }
+  },
+  "sample_manifest": {
+    "rows": 2000,
+    "unique_source_urls": 2000,
+    "unique_archive_items": 1485,
+    "unique_artists": 1191,
+    "max_per_archive_item": 10,
+    "max_per_artist": 50,
+    "unknown_artist_rows": 50
+  },
+  "extraction": {
+    "attempts": 3981,
+    "failures": 6,
+    "success_rate": 0.9984928409947249,
+    "download_failures": 19,
+    "download_success_rate": 0.9905,
+    "expected_low_stream_rows": 2000,
+    "extracted_low_stream_rows": 1979,
+    "low_stream_extraction_rate": 0.9895
+  },
+  "audio_qc": {
+    "median_duration_seconds": 30.0,
+    "median_analyzed_duration_seconds": 30.0,
+    "duration_under_30_seconds_rows": 74
+  },
+  "source_bias": {
+    "source_separability_auc": 0.9493181663984868,
+    "source_separability_auc_audio_features": 0.9493181663984868,
+    "source_separability_auc_all_numeric": 0.9999303812273359,
+    "audio_feature_auc_excludes": [
+      "duration_seconds",
+      "analyzed_duration_seconds"
+    ],
+    "source_target_table": {
+      "0": {
+        "archive_low_download": 1979,
+        "charted": 0
+      },
+      "1": {
+        "archive_low_download": 0,
+        "charted": 1996
+      }
+    },
+    "source_holdout_possible": false,
+    "interpretation": "High AUC means source/domain artifacts may dominate popularity separation."
+  },
+  "checks": {
+    "download_success_rate_ge_90pct": true,
+    "feature_extraction_success_rate_ge_85pct": true,
+    "duration_metadata_present": true,
+    "median_analyzed_duration_25_to_31s": true,
+    "max_archive_item_le_10": true,
+    "max_artist_le_20_except_unknown": true,
+    "unknown_artist_le_50": true,
+    "source_separability_auc_lt_80pct": false
+  },
+  "by_source_summary": {
+    "archive_low_download": {
+      "duration_seconds": {
+        "median": 246.8724263038549,
+        "p10": 76.64921088435375,
+        "p90": 569.093514739229
+      },
+      "tempo": {
+        "median": 117.45383522727272,
+        "p10": 80.74951171875,
+        "p90": 161.4990234375
+      },
+      "rms_mean": {
+        "median": 0.1109906807541847,
+        "p10": 0.025443126633763302,
+        "p90": 0.2952335119247436
+      },
+      "spectral_centroid_mean": {
+        "median": 1704.987370543887,
+        "p10": 694.1190236007914,
+        "p90": 3015.7116212517108
+      },
+      "spectral_bandwidth_mean": {
+        "median": 1923.6680443919315,
+        "p10": 917.8475375622656,
+        "p90": 2718.121770073577
+      }
+    },
+    "charted": {
+      "duration_seconds": {
+        "median": 30.0,
+        "p10": 30.0,
+        "p90": 30.0
+      },
+      "tempo": {
+        "median": 117.45383522727272,
+        "p10": 86.1328125,
+        "p90": 161.4990234375
+      },
+      "rms_mean": {
+        "median": 0.12724748253822327,
+        "p10": 0.06010640226304525,
+        "p90": 0.249975673854351
+      },
+      "spectral_centroid_mean": {
+        "median": 2300.4955499666276,
+        "p10": 1613.4673847310978,
+        "p90": 2983.403455687124
+      },
+      "spectral_bandwidth_mean": {
+        "median": 2418.3681838983734,
+        "p10": 1904.8616004547725,
+        "p90": 2842.30549336666
+      }
+    }
+  }
+}

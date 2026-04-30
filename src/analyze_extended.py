@@ -4,7 +4,14 @@ import joblib
 import pandas as pd
 import numpy as np
 import shap
-from music_success_predictor import AudioFeatureExtractor
+from music_success_predictor import (
+    AudioFeatureExtractor,
+    DEFAULT_PREVIEW_SECONDS,
+    add_key_features,
+    charted_similarity_percentile,
+    robust_feature_distance,
+    score_percentile,
+)
 import warnings
 
 warnings.filterwarnings("ignore")
@@ -14,9 +21,8 @@ def analyze_extended_song(audio_path):
     print("\nЗагрузка моделей XGBoost...")
     try:
         model = joblib.load("models/xgboost_music_model.pkl")
-        scaler = joblib.load("models/xgboost_scaler.pkl")
-        le = joblib.load("models/xgboost_key_encoder.pkl")
         feature_cols = joblib.load("models/xgboost_features.pkl")
+        metadata = joblib.load("models/xgboost_score_metadata.pkl")
     except Exception as e:
         print(
             f"Ошибка загрузки моделей: {e}. Сначала запустите 'python train_extended_model.py'"
@@ -27,46 +33,47 @@ def analyze_extended_song(audio_path):
     print("   РАСШИРЕННЫЙ АНАЛИЗ МУЗЫКАЛЬНОГО ТРЕКА (XGBoost + SHAP)")
     print("=" * 35 + "\n")
     print(f"Файл: {audio_path}")
-    print("Извлечение фич (может занять около 1 минуты)...")
+    print(f"Извлечение фич из первых {DEFAULT_PREVIEW_SECONDS} секунд...")
 
-    features = AudioFeatureExtractor.extract_features(audio_path)
+    features = AudioFeatureExtractor.extract_features(
+        audio_path,
+        preview_seconds=DEFAULT_PREVIEW_SECONDS,
+    )
     if features is None:
         print("Ошибка извлечения фич")
         return
 
-    # Подготовка вектора
     row = pd.DataFrame([features])
-
-    # Кодируем key
-    try:
-        row["key_encoded"] = le.transform([row["key"].iloc[0]])[0]
-    except Exception:
-        # Неизвестный ключ - берем самый частый
-        row["key_encoded"] = le.transform(["C major"])[0]
+    row = add_key_features(row)
 
     # Собираем в нужном порядке
-    X = row[feature_cols].values
-    X_scaled = scaler.transform(X)
+    X = row[feature_cols]
 
-    # Предсказание
-    prob = model.predict_proba(X_scaled)[0, 1] * 100
-    pred = model.predict(X_scaled)[0]
+    raw_score = float(model.predict_proba(X)[0, 1])
+    model_percentile = score_percentile(raw_score, metadata)
+    score, charted_distance = charted_similarity_percentile(X, metadata)
+    distance, threshold, in_distribution = robust_feature_distance(X, metadata)
+    pred = model.predict(X)[0]
 
     print("\n" + "-" * 70)
     bar_length = 50
-    filled = int(bar_length * prob / 100)
+    filled = int(bar_length * score / 100)
     bar = "#" * filled + "-" * (bar_length - filled)
 
-    print(f"\nВЕРОЯТНОСТЬ УСПЕХА: {prob:.2f}%")
+    print(f"\nCHARTED-REFERENCE AUDIO SIMILARITY PERCENTILE: {score:.2f}%")
     print(f"   [{bar}]")
-    print(f"\nПредсказание: {'Успешный трек' if pred == 1 else 'Менее успешный трек'}")
+    print(f"Charted-reference distance: {charted_distance:.2f}")
+    print(f"XGBoost percentile: {model_percentile:.2f}% | raw model score: {raw_score * 100:.2f}%")
+    print("Score показывает близость к weighted charted audio reference profile, не реальный шанс попадания в чарты.")
+    print(f"Reliability: {'in-distribution' if in_distribution else 'out-of-distribution'} ({distance:.2f}/{threshold:.2f})")
+    print(f"\nКласс модели: {'похож на charted reference tracks' if pred == 1 else 'похож на low-download reference tracks'}")
 
     # Интерпретация с SHAP
     print("\n" + "-" * 70)
     print("\nАНАЛИЗ ВЛИЯНИЯ ХАРАКТЕРИСТИК (SHAP):")
 
     explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_scaled)
+    shap_values = explainer.shap_values(X)
 
     # Сортируем фичи по абсолютному влиянию
     contribs = []
@@ -81,15 +88,11 @@ def analyze_extended_song(audio_path):
         direction = "УВЕЛИЧИЛ" if val > 0 else "УМЕНЬШИЛ"
         sign = "+" if val > 0 else ""
         raw_val = row[col].iloc[0]
-        if col == "key_encoded":
-            col_name = "Тональность"
-            raw_val = row["key"].iloc[0]
-        else:
-            col_name = col
-            if isinstance(raw_val, float):
-                raw_val = f"{raw_val:.2f}"
+        col_name = col
+        if isinstance(raw_val, float):
+            raw_val = f"{raw_val:.2f}"
 
-        print(f"   {sign}{val:.2f} | {col_name} = {raw_val} -> {direction} вероятность")
+        print(f"   {sign}{val:.2f} | {col_name} = {raw_val} -> {direction} score")
 
     print("\n" + "=" * 35 + "\n")
 

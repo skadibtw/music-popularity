@@ -1,21 +1,25 @@
 import streamlit as st
-import librosa
-import numpy as np
 import pandas as pd
 import joblib
 import shap
-import matplotlib.pyplot as plt
 import os
+import tempfile
 import plotly.express as px
-from src.music_success_predictor import AudioFeatureExtractor
+from src.music_success_predictor import (
+    AudioFeatureExtractor,
+    DEFAULT_PREVIEW_SECONDS,
+    add_key_features,
+    charted_similarity_percentile,
+    robust_feature_distance,
+    score_percentile,
+)
 import warnings
 
 warnings.filterwarnings("ignore")
 
 # --- Настройки страницы ---
 st.set_page_config(
-    page_title="Music Hit Predictor",
-    page_icon="🎵",
+    page_title="Music Hit-Likeness Analyzer",
     layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -40,109 +44,140 @@ st.markdown(
 def load_models():
     try:
         model = joblib.load("models/xgboost_music_model.pkl")
-        scaler = joblib.load("models/xgboost_scaler.pkl")
-        le = joblib.load("models/xgboost_key_encoder.pkl")
         feature_cols = joblib.load("models/xgboost_features.pkl")
-        return model, scaler, le, feature_cols
+        metadata = joblib.load("models/xgboost_score_metadata.pkl")
+        return model, feature_cols, metadata
     except Exception as e:
-        return None, None, None, None
+        return None, None, None
 
 
-model, scaler, le, feature_cols = load_models()
+model, feature_cols, metadata = load_models()
 
 # --- Боковая панель ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/3659/3659784.png", width=100)
-    st.title("Hit Predictor AI 🤖")
+    st.title("Hit-Likeness Analyzer")
     st.write(
-        "Загрузи свой MP3-файл, и наша модель (XGBoost) предскажет, какова вероятность того, что трек попадет в чарты!"
+        "Upload an MP3 or WAV file. The app compares its local audio features with the current chart-reference dataset."
     )
     st.write("---")
-    st.info("Обучено на данных Billboard Hot 100 и Official UK Charts.")
+    st.info("Score = audio similarity percentile against the weighted charted reference distribution, not commercial success probability.")
 
 # --- Основной контент ---
-st.title("🎵 Анализатор Музыкального Потенциала")
+st.title("Music Hit-Likeness Analyzer")
 st.write(
-    "Узнай, насколько твой трек близок к хитам мировых чартов по аудио-характеристикам."
+    "Scores how close an uploaded track is to the weighted charted audio reference profile, relative to the current training dataset."
 )
 
 if model is None:
     st.error(
-        "❌ Модель не найдена! Сначала обучи ее локально скриптом `train_extended_model.py`."
+        "Model artifacts are missing. Train locally with `src/train_extended_model.py` first."
     )
     st.stop()
 
-uploaded_file = st.file_uploader("Загрузите ваш трек (MP3, WAV)", type=["mp3", "wav"])
+with st.expander("How to read the score"):
+    st.write(
+        "The main number is a percentile of closeness to the weighted charted audio-feature distribution. "
+        "For example, 80% means the track is closer to the charted reference profile than roughly 80% of the current reference tracks."
+    )
+    st.write(
+        "The XGBoost percentile is shown separately as a secondary signal because the current audio-only classifier remains source-confounded."
+    )
+    if metadata:
+        source_counts = metadata.get("label_source_counts", {})
+        st.write(
+            f"Reference set: {metadata.get('n_tracks', 'N/A')} training tracks, "
+            f"charted base rate: {metadata.get('base_rate', 0) * 100:.1f}%, "
+            f"OOF ROC-AUC: {metadata.get('oof_auc', 0):.3f}."
+        )
+        if source_counts:
+            st.write(f"Label sources: {source_counts}")
+
+st.warning(
+    "The model does not know marketing, artist reputation, release timing, or platform exposure. "
+    "Use the result as a comparative audio score, not a chart-success forecast."
+)
+
+uploaded_file = st.file_uploader("Upload a track (MP3, WAV)", type=["mp3", "wav"])
 
 if uploaded_file is not None:
     st.audio(uploaded_file, format="audio/mp3")
 
-    if st.button("🚀 Проанализировать трек", use_container_width=True):
-        with st.spinner("Извлекаем фичи и анализируем... (Это займет около 30 секунд)"):
-            # Сохраняем временно файл
-            temp_path = "temp_audio.mp3"
-            with open(temp_path, "wb") as f:
-                f.write(uploaded_file.getbuffer())
+    if st.button("Analyze track", use_container_width=True):
+        with st.spinner(f"Extracting features from the first {DEFAULT_PREVIEW_SECONDS} seconds..."):
+            suffix = os.path.splitext(uploaded_file.name)[1] or ".mp3"
+            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=suffix)
+            temp_path = temp_file.name
+            temp_file.write(uploaded_file.getbuffer())
+            temp_file.close()
 
-            # Извлекаем фичи
-            features = AudioFeatureExtractor.extract_features(temp_path)
+            features = AudioFeatureExtractor.extract_features(
+                temp_path,
+                preview_seconds=DEFAULT_PREVIEW_SECONDS,
+            )
 
             if features is None:
-                st.error("Не удалось обработать аудио. Проверьте формат файла.")
+                st.error("Audio processing failed. Check the file format and try again.")
             else:
-                # Подготовка к предсказанию
                 row = pd.DataFrame([features])
-                try:
-                    row["key_encoded"] = le.transform([row["key"].iloc[0]])[0]
-                except:
-                    row["key_encoded"] = le.transform(["C major"])[0]  # Фолбэк
+                row = add_key_features(row)
+                X = row[feature_cols]
 
-                X = row[feature_cols].values
-                X_scaled = scaler.transform(X)
-
-                # Предсказание
-                prob = model.predict_proba(X_scaled)[0, 1] * 100
-                pred = model.predict(X_scaled)[0]
+                raw_score = float(model.predict_proba(X)[0, 1])
+                model_percentile = score_percentile(raw_score, metadata)
+                score, charted_distance = charted_similarity_percentile(X, metadata)
+                distance, threshold, in_distribution = robust_feature_distance(X, metadata)
+                pred = model.predict(X)[0]
 
                 # --- РЕЗУЛЬТАТЫ ---
                 st.markdown("---")
                 st.markdown(
-                    '<p class="big-font">🎯 Результат анализа</p>',
+                    '<p class="big-font">Analysis Result</p>',
                     unsafe_allow_html=True,
                 )
 
                 col1, col2 = st.columns([1, 2])
                 with col1:
                     st.markdown(
-                        f'<div class="metric-value">{prob:.1f}%</div>',
+                        f'<div class="metric-value">{score:.1f}%</div>',
                         unsafe_allow_html=True,
                     )
-                    st.write("**Вероятность успеха**")
-                    st.progress(int(prob))
+                    st.write("**Hit-likeness score**")
+                    st.progress(int(score))
+                    st.caption(
+                        f"Charted-reference distance: {charted_distance:.2f}; "
+                        f"XGBoost percentile: {model_percentile:.1f}%; raw model score: {raw_score * 100:.1f}%"
+                    )
 
-                    if prob > 70:
-                        st.success("⭐⭐⭐ Потенциальный ХИТ!")
-                    elif prob > 40:
-                        st.warning("⭐⭐ Хороший трек. Есть шансы.")
+                    if score > 70:
+                        st.success("Close to the weighted charted audio reference profile.")
+                    elif score > 40:
+                        st.warning("Middle range: some features resemble charted reference tracks.")
                     else:
-                        st.info("⭐ Андерграунд. Не типичный формат для топ-чартов.")
+                        st.info("Far from the charted audio reference profile with the current features.")
+
+                    if in_distribution:
+                        st.caption(f"Reliability: within training feature range ({distance:.2f}/{threshold:.2f}).")
+                    else:
+                        st.warning(
+                            f"Low reliability: this track is far from the training feature range ({distance:.2f}/{threshold:.2f})."
+                        )
 
                 with col2:
-                    st.write("**Основные характеристики:**")
+                    st.write("**Audio Features:**")
                     c1, c2, c3 = st.columns(3)
-                    c1.metric("BPM (Темп)", f"{features['tempo']:.0f}")
-                    c2.metric("Тональность", features["key"])
-                    c3.metric("Энергия (RMS)", f"{features['rms_mean']:.3f}")
+                    c1.metric("BPM", f"{features['tempo']:.0f}")
+                    c2.metric("Key", features["key"])
+                    c3.metric("RMS Energy", f"{features['rms_mean']:.3f}")
 
                 # --- SHAP Анализ ---
                 st.markdown("---")
                 st.markdown(
-                    '<p class="big-font">💡 Что повлияло на оценку?</p>',
+                    '<p class="big-font">Feature Contributions</p>',
                     unsafe_allow_html=True,
                 )
 
                 explainer = shap.TreeExplainer(model)
-                shap_values = explainer.shap_values(X_scaled)
+                shap_values = explainer.shap_values(X)
 
                 # Собираем данные для графика
                 shap_df = pd.DataFrame(
@@ -157,9 +192,9 @@ if uploaded_file is not None:
                 shap_df["Abs_Impact"] = shap_df["Impact"].abs()
                 shap_df = shap_df.sort_values("Abs_Impact", ascending=False).head(10)
                 shap_df["Direction"] = shap_df["Impact"].apply(
-                    lambda x: "Увеличило вероятность"
+                    lambda x: "Increased score"
                     if x > 0
-                    else "Уменьшило вероятность"
+                    else "Decreased score"
                 )
 
                 fig = px.bar(
@@ -169,10 +204,10 @@ if uploaded_file is not None:
                     orientation="h",
                     color="Direction",
                     color_discrete_map={
-                        "Увеличило вероятность": "#2ca02c",
-                        "Уменьшило вероятность": "#ff4b4b",
+                        "Increased score": "#2ca02c",
+                        "Decreased score": "#ff4b4b",
                     },
-                    title="Топ факторов в твоем треке (SHAP Values)",
+                    title="Top XGBoost feature contributions (SHAP)",
                 )
                 fig.update_layout(yaxis={"categoryorder": "total ascending"})
                 st.plotly_chart(fig, use_container_width=True)

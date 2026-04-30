@@ -12,63 +12,64 @@ sns.set_palette("husl")
 def run_eda():
     os.makedirs("plots", exist_ok=True)
     print("Загрузка данных...")
-    df = pd.read_csv("data/processed/tracks_with_features.csv")
+    df = pd.read_csv("data/processed/extended_features.csv")
 
     print("Очистка данных...")
-    # Парсим темп
     if df["tempo"].dtype == "object":
         df["tempo"] = df["tempo"].apply(
             lambda x: float(str(x).strip("[]")) if pd.notna(x) else np.nan
         )
 
-    df = df.dropna(subset=["tempo", "key"])
-    df["success"] = (df["peak_rank"] <= 20).astype(int)
-
-    # Десятилетия
-    df["decade"] = (df["year"] // 10) * 10
+    df = df.dropna(subset=["tempo", "key", "popular"])
 
     print("Генерация графиков...")
 
     # 1. Корреляционная матрица (числовые фичи)
     plt.figure(figsize=(8, 6))
-    corr_cols = ["peak_rank", "weeks-on-board", "tempo", "year", "rank"]
+    corr_cols = [
+        "popular",
+        "popularity_weight",
+        "peak_rank",
+        "weeks-on-board",
+        "tempo",
+        "duration_seconds",
+        "rms_mean",
+        "spectral_centroid_mean",
+    ]
+    corr_cols = [col for col in corr_cols if col in df.columns]
     sns.heatmap(df[corr_cols].corr(), annot=True, cmap="coolwarm", vmin=-1, vmax=1)
-    plt.title("Корреляционная матрица базовых фичей")
+    plt.title("Feature correlation matrix")
     plt.tight_layout()
     plt.savefig("plots/correlation_matrix.png")
     plt.close()
 
-    # 2. Темп по десятилетиям
+    # 2. Tempo by source.
     plt.figure(figsize=(10, 6))
-    sns.boxplot(x="decade", y="tempo", data=df)
-    plt.title("Изменение темпа (BPM) по десятилетиям")
+    sns.boxplot(x="label_source", y="tempo", data=df)
+    plt.title("Tempo by label source")
     plt.ylim(50, 200)
     plt.tight_layout()
-    plt.savefig("plots/tempo_by_decade.png")
+    plt.savefig("plots/tempo_by_source.png")
     plt.close()
 
-    # 3. Топовые тональности для хитов vs не-хитов
+    # 3. Common keys by popular target.
     plt.figure(figsize=(12, 6))
     top_keys = df["key"].value_counts().head(10).index
     sns.countplot(
-        data=df[df["key"].isin(top_keys)], x="key", hue="success", order=top_keys
+        data=df[df["key"].isin(top_keys)], x="key", hue="popular", order=top_keys
     )
-    plt.title("Популярные тональности: Топ-20 Хиты vs Остальные")
+    plt.title("Common keys: charted vs low-download reference")
     plt.xticks(rotation=45)
     plt.tight_layout()
-    plt.savefig("plots/top_keys_success.png")
+    plt.savefig("plots/top_keys_popular.png")
     plt.close()
 
-    # 4. Распределение недель в чарте по тональностям
+    # 4. Duration by source to expose source-quality artifacts.
     plt.figure(figsize=(12, 6))
-    sns.boxplot(
-        data=df[df["key"].isin(top_keys)], x="key", y="weeks-on-board", order=top_keys
-    )
-    plt.title("Сколько недель держатся в чарте разные тональности")
-    plt.ylim(0, 50)
-    plt.xticks(rotation=45)
+    sns.boxplot(data=df, x="label_source", y="duration_seconds")
+    plt.title("Duration by label source")
     plt.tight_layout()
-    plt.savefig("plots/weeks_on_board_by_key.png")
+    plt.savefig("plots/duration_by_source.png")
     plt.close()
 
     print("EDA завершена. Графики сохранены в папке 'plots'.")

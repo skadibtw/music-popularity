@@ -1,0 +1,279 @@
+{
+  "dataset": {
+    "rows_used": 3975,
+    "feature_count": 37,
+    "feature_extraction": {
+      "mode": "preview",
+      "preview_seconds": 30
+    },
+    "source_feature_auc_threshold": 0.65,
+    "excluded_source_confounded_features": [
+      {
+        "feature": "spectral_bandwidth_mean",
+        "source_auc": 0.7402495744394296,
+        "source_abs_auc": 0.7402495744394296
+      },
+      {
+        "feature": "mfcc_0_mean",
+        "source_auc": 0.7336957897604204,
+        "source_abs_auc": 0.7336957897604204
+      },
+      {
+        "feature": "mfcc_0_std",
+        "source_auc": 0.27870268075311816,
+        "source_abs_auc": 0.7212973192468819
+      },
+      {
+        "feature": "spectral_rolloff_mean",
+        "source_auc": 0.7108347569317512,
+        "source_abs_auc": 0.7108347569317512
+      },
+      {
+        "feature": "spectral_centroid_mean",
+        "source_auc": 0.694089290253068,
+        "source_abs_auc": 0.694089290253068
+      }
+    ],
+    "target_counts": {
+      "0": 1979,
+      "1": 1996
+    },
+    "label_source_counts": {
+      "charted": 1996,
+      "archive_low_download": 1979
+    },
+    "popularity_tier_counts": {
+      "low_stream": 1979,
+      "chart_51_100": 926,
+      "top20": 541,
+      "chart_21_50": 529
+    },
+    "base_rate": 0.5021383647798742
+  },
+  "labels": {
+    "positive": "charted track",
+    "negative": "archive_low_download track"
+  },
+  "validation": {
+    "split": "StratifiedGroupKFold(n_splits=5, group=artist)",
+    "distance_score_roc_auc": 0.856069136757598,
+    "xgboost_holdout_accuracy": 0.9044025157232705,
+    "xgboost_holdout_roc_auc": 0.9600632911392405,
+    "xgboost_oof_roc_auc": 0.952418480214598,
+    "model_feature_source_separability_auc": 0.9343935470739356,
+    "train_target_distribution": {
+      "1": 0.5019,
+      "0": 0.4981
+    },
+    "test_target_distribution": {
+      "1": 0.5031,
+      "0": 0.4969
+    }
+  },
+  "scoring": {
+    "description": "Hit potential score: percentile closeness to the weighted charted audio-feature reference profile.",
+    "ood_distance_p95": 1.1496848564641795
+  },
+  "top_features": [
+    {
+      "feature": "zcr_mean",
+      "importance": 0.10781742632389069
+    },
+    {
+      "feature": "mfcc_12_std",
+      "importance": 0.06724445521831512
+    },
+    {
+      "feature": "mfcc_11_std",
+      "importance": 0.05700791999697685
+    },
+    {
+      "feature": "zcr_std",
+      "importance": 0.056398775428533554
+    },
+    {
+      "feature": "mfcc_1_std",
+      "importance": 0.05575142428278923
+    },
+    {
+      "feature": "mfcc_9_mean",
+      "importance": 0.053425390273332596
+    },
+    {
+      "feature": "chroma_mean",
+      "importance": 0.04565434902906418
+    },
+    {
+      "feature": "mfcc_7_mean",
+      "importance": 0.045302990823984146
+    },
+    {
+      "feature": "mfcc_2_mean",
+      "importance": 0.037911783903837204
+    },
+    {
+      "feature": "mfcc_10_std",
+      "importance": 0.03292187675833702
+    },
+    {
+      "feature": "mfcc_2_std",
+      "importance": 0.03265523537993431
+    },
+    {
+      "feature": "mfcc_6_std",
+      "importance": 0.031782831996679306
+    },
+    {
+      "feature": "chroma_std",
+      "importance": 0.030976232141256332
+    },
+    {
+      "feature": "mfcc_3_mean",
+      "importance": 0.030678506940603256
+    },
+    {
+      "feature": "rms_mean",
+      "importance": 0.028919642791152
+    }
+  ],
+  "source_feature_diagnostics": [
+    {
+      "feature": "spectral_bandwidth_mean",
+      "source_auc": 0.7402495744394296,
+      "source_abs_auc": 0.7402495744394296
+    },
+    {
+      "feature": "mfcc_0_mean",
+      "source_auc": 0.7336957897604204,
+      "source_abs_auc": 0.7336957897604204
+    },
+    {
+      "feature": "mfcc_0_std",
+      "source_auc": 0.27870268075311816,
+      "source_abs_auc": 0.7212973192468819
+    },
+    {
+      "feature": "spectral_rolloff_mean",
+      "source_auc": 0.7108347569317512,
+      "source_abs_auc": 0.7108347569317512
+    },
+    {
+      "feature": "spectral_centroid_mean",
+      "source_auc": 0.694089290253068,
+      "source_abs_auc": 0.694089290253068
+    },
+    {
+      "feature": "zcr_mean",
+      "source_auc": 0.6427663310451118,
+      "source_abs_auc": 0.6427663310451118
+    },
+    {
+      "feature": "mfcc_1_std",
+      "source_auc": 0.3615786398466463,
+      "source_abs_auc": 0.6384213601533537
+    },
+    {
+      "feature": "mfcc_1_mean",
+      "source_auc": 0.3831197007456044,
+      "source_abs_auc": 0.6168802992543956
+    },
+    {
+      "feature": "mfcc_9_std",
+      "source_auc": 0.6166686581854968,
+      "source_abs_auc": 0.6166686581854968
+    },
+    {
+      "feature": "mfcc_10_std",
+      "source_auc": 0.6112570011169383,
+      "source_abs_auc": 0.6112570011169383
+    },
+    {
+      "feature": "mfcc_12_std",
+      "source_auc": 0.6109962471684146,
+      "source_abs_auc": 0.6109962471684146
+    },
+    {
+      "feature": "key_is_minor",
+      "source_auc": 0.390660426461817,
+      "source_abs_auc": 0.609339573538183
+    },
+    {
+      "feature": "mfcc_6_std",
+      "source_auc": 0.5962594719504698,
+      "source_abs_auc": 0.5962594719504698
+    },
+    {
+      "feature": "mfcc_8_std",
+      "source_auc": 0.595727331368143,
+      "source_abs_auc": 0.595727331368143
+    },
+    {
+      "feature": "mfcc_11_std",
+      "source_auc": 0.595316200870665,
+      "source_abs_auc": 0.595316200870665
+    },
+    {
+      "feature": "zcr_std",
+      "source_auc": 0.5900671985709671,
+      "source_abs_auc": 0.5900671985709671
+    },
+    {
+      "feature": "mfcc_9_mean",
+      "source_auc": 0.5868308116991943,
+      "source_abs_auc": 0.5868308116991943
+    },
+    {
+      "feature": "chroma_mean",
+      "source_auc": 0.41570065345445817,
+      "source_abs_auc": 0.5842993465455418
+    },
+    {
+      "feature": "mfcc_10_mean",
+      "source_auc": 0.421051552321419,
+      "source_abs_auc": 0.578948447678581
+    },
+    {
+      "feature": "mfcc_8_mean",
+      "source_auc": 0.4244492015865991,
+      "source_abs_auc": 0.575550798413401
+    }
+  ],
+  "qc": {
+    "checks": {
+      "download_success_rate_ge_90pct": true,
+      "feature_extraction_success_rate_ge_85pct": true,
+      "duration_metadata_present": true,
+      "median_analyzed_duration_25_to_31s": true,
+      "max_archive_item_le_10": true,
+      "max_artist_le_20_except_unknown": true,
+      "unknown_artist_le_50": true,
+      "source_separability_auc_lt_80pct": false
+    },
+    "audio_qc": {
+      "median_duration_seconds": 30.0,
+      "median_analyzed_duration_seconds": 30.0,
+      "duration_under_30_seconds_rows": 74
+    },
+    "source_bias": {
+      "source_separability_auc": 0.9493181663984868,
+      "source_separability_auc_audio_features": 0.9493181663984868,
+      "source_separability_auc_all_numeric": 0.9999303812273359,
+      "audio_feature_auc_excludes": [
+        "duration_seconds",
+        "analyzed_duration_seconds"
+      ],
+      "source_target_table": {
+        "0": {
+          "archive_low_download": 1979,
+          "charted": 0
+        },
+        "1": {
+          "archive_low_download": 0,
+          "charted": 1996
+        }
+      },
+      "source_holdout_possible": false,
+      "interpretation": "High AUC means source/domain artifacts may dominate popularity separation."
+    }
+  }
+}
