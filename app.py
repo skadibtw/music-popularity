@@ -8,6 +8,7 @@ import plotly.express as px
 from src.research_insights import (
     DEFAULT_MODEL_REPORT_PATH,
     DEFAULT_QC_REPORT_PATH,
+    PROJECT_ROOT,
     build_dataset_snapshot,
     build_research_summary,
     compare_track_to_reference,
@@ -51,9 +52,9 @@ st.markdown(
 @st.cache_resource
 def load_models():
     try:
-        model = joblib.load("models/xgboost_music_model.pkl")
-        feature_cols = joblib.load("models/xgboost_features.pkl")
-        metadata = joblib.load("models/xgboost_score_metadata.pkl")
+        model = joblib.load(PROJECT_ROOT / "models/xgboost_music_model.pkl")
+        feature_cols = joblib.load(PROJECT_ROOT / "models/xgboost_features.pkl")
+        metadata = joblib.load(PROJECT_ROOT / "models/xgboost_score_metadata.pkl")
         return model, feature_cols, metadata
     except Exception as e:
         return None, None, None
