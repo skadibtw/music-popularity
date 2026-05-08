@@ -118,7 +118,7 @@ class AudioFeatureExtractor:
             features["analyzed_duration_seconds"] = float(len(y) / sr) if sr else 0.0
 
             tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
-            features["tempo"] = float(tempo)
+            features["tempo"] = float(np.ravel(tempo)[0])
 
             chroma = librosa.feature.chroma_cqt(y=y, sr=sr)
             features["key"] = AudioFeatureExtractor._estimate_key(chroma)

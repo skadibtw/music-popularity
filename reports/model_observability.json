@@ -1,54 +1,61 @@
 {
   "dataset": {
-    "rows_used": 3975,
-    "feature_count": 37,
+    "rows_used": 970,
+    "feature_count": 36,
     "feature_extraction": {
       "mode": "preview",
       "preview_seconds": 30
     },
+    "min_analyzed_duration_seconds": 25,
+    "rows_removed_short_analysis": 18,
     "source_feature_auc_threshold": 0.65,
     "excluded_source_confounded_features": [
       {
         "feature": "spectral_bandwidth_mean",
-        "source_auc": 0.7402495744394296,
-        "source_abs_auc": 0.7402495744394296
-      },
-      {
-        "feature": "mfcc_0_mean",
-        "source_auc": 0.7336957897604204,
-        "source_abs_auc": 0.7336957897604204
+        "source_auc": 0.7233054307880767,
+        "source_abs_auc": 0.7233054307880767
       },
       {
         "feature": "mfcc_0_std",
-        "source_auc": 0.27870268075311816,
-        "source_abs_auc": 0.7212973192468819
+        "source_auc": 0.29744283380971825,
+        "source_abs_auc": 0.7025571661902817
       },
       {
         "feature": "spectral_rolloff_mean",
-        "source_auc": 0.7108347569317512,
-        "source_abs_auc": 0.7108347569317512
+        "source_auc": 0.7022594256158976,
+        "source_abs_auc": 0.7022594256158976
+      },
+      {
+        "feature": "mfcc_0_mean",
+        "source_auc": 0.7015533551109296,
+        "source_abs_auc": 0.7015533551109296
       },
       {
         "feature": "spectral_centroid_mean",
-        "source_auc": 0.694089290253068,
-        "source_abs_auc": 0.694089290253068
+        "source_auc": 0.6903583095140874,
+        "source_abs_auc": 0.6903583095140874
+      },
+      {
+        "feature": "zcr_mean",
+        "source_auc": 0.6579768953314277,
+        "source_abs_auc": 0.6579768953314277
       }
     ],
     "target_counts": {
-      "0": 1979,
-      "1": 1996
+      "0": 474,
+      "1": 496
     },
     "label_source_counts": {
-      "charted": 1996,
-      "archive_low_download": 1979
+      "charted": 496,
+      "archive_low_download": 474
     },
     "popularity_tier_counts": {
-      "low_stream": 1979,
-      "chart_51_100": 926,
-      "top20": 541,
-      "chart_21_50": 529
+      "low_stream": 474,
+      "chart_51_100": 232,
+      "chart_21_50": 140,
+      "top20": 124
     },
-    "base_rate": 0.5021383647798742
+    "base_rate": 0.511340206185567
   },
   "labels": {
     "positive": "charted track",
@@ -56,224 +63,361 @@
   },
   "validation": {
     "split": "StratifiedGroupKFold(n_splits=5, group=artist)",
-    "distance_score_roc_auc": 0.856069136757598,
-    "xgboost_holdout_accuracy": 0.9044025157232705,
-    "xgboost_holdout_roc_auc": 0.9600632911392405,
-    "xgboost_oof_roc_auc": 0.952418480214598,
-    "model_feature_source_separability_auc": 0.9343935470739356,
+    "distance_score_roc_auc": 0.8622567034163604,
+    "xgboost_holdout_accuracy": 0.8505154639175257,
+    "xgboost_holdout_roc_auc": 0.9313131313131313,
+    "xgboost_oof_roc_auc": 0.9231318905675787,
+    "model_feature_source_separability_auc": 0.9112605485232068,
     "train_target_distribution": {
-      "1": 0.5019,
-      "0": 0.4981
+      "1": 0.5116,
+      "0": 0.4884
     },
     "test_target_distribution": {
-      "1": 0.5031,
-      "0": 0.4969
+      "1": 0.5103,
+      "0": 0.4897
     }
   },
   "scoring": {
     "description": "Hit potential score: percentile closeness to the weighted charted audio-feature reference profile.",
-    "ood_distance_p95": 1.1496848564641795
+    "ood_distance_p95": 1.1177520540960888
   },
   "top_features": [
     {
-      "feature": "zcr_mean",
-      "importance": 0.10781742632389069
-    },
-    {
-      "feature": "mfcc_12_std",
-      "importance": 0.06724445521831512
-    },
-    {
-      "feature": "mfcc_11_std",
-      "importance": 0.05700791999697685
-    },
-    {
       "feature": "zcr_std",
-      "importance": 0.056398775428533554
-    },
-    {
-      "feature": "mfcc_1_std",
-      "importance": 0.05575142428278923
-    },
-    {
-      "feature": "mfcc_9_mean",
-      "importance": 0.053425390273332596
-    },
-    {
-      "feature": "chroma_mean",
-      "importance": 0.04565434902906418
-    },
-    {
-      "feature": "mfcc_7_mean",
-      "importance": 0.045302990823984146
-    },
-    {
-      "feature": "mfcc_2_mean",
-      "importance": 0.037911783903837204
+      "importance": 0.0683923289179802
     },
     {
       "feature": "mfcc_10_std",
-      "importance": 0.03292187675833702
+      "importance": 0.06776315718889236
     },
     {
-      "feature": "mfcc_2_std",
-      "importance": 0.03265523537993431
+      "feature": "chroma_mean",
+      "importance": 0.06552127003669739
     },
     {
-      "feature": "mfcc_6_std",
-      "importance": 0.031782831996679306
+      "feature": "key_is_minor",
+      "importance": 0.05389117822051048
+    },
+    {
+      "feature": "mfcc_1_std",
+      "importance": 0.05275266617536545
+    },
+    {
+      "feature": "mfcc_1_mean",
+      "importance": 0.0481138676404953
+    },
+    {
+      "feature": "mfcc_9_std",
+      "importance": 0.03811756893992424
+    },
+    {
+      "feature": "mfcc_12_std",
+      "importance": 0.03778135031461716
+    },
+    {
+      "feature": "mfcc_9_mean",
+      "importance": 0.03257323428988457
     },
     {
       "feature": "chroma_std",
-      "importance": 0.030976232141256332
+      "importance": 0.032560084015131
     },
     {
-      "feature": "mfcc_3_mean",
-      "importance": 0.030678506940603256
+      "feature": "mfcc_4_std",
+      "importance": 0.031290531158447266
     },
     {
-      "feature": "rms_mean",
-      "importance": 0.028919642791152
+      "feature": "mfcc_6_std",
+      "importance": 0.03126180171966553
+    },
+    {
+      "feature": "tonnetz_std",
+      "importance": 0.02851308323442936
+    },
+    {
+      "feature": "mfcc_5_mean",
+      "importance": 0.028071559965610504
+    },
+    {
+      "feature": "mfcc_2_std",
+      "importance": 0.027052676305174828
     }
   ],
   "source_feature_diagnostics": [
     {
       "feature": "spectral_bandwidth_mean",
-      "source_auc": 0.7402495744394296,
-      "source_abs_auc": 0.7402495744394296
-    },
-    {
-      "feature": "mfcc_0_mean",
-      "source_auc": 0.7336957897604204,
-      "source_abs_auc": 0.7336957897604204
+      "source_auc": 0.7233054307880767,
+      "source_abs_auc": 0.7233054307880767
     },
     {
       "feature": "mfcc_0_std",
-      "source_auc": 0.27870268075311816,
-      "source_abs_auc": 0.7212973192468819
+      "source_auc": 0.29744283380971825,
+      "source_abs_auc": 0.7025571661902817
     },
     {
       "feature": "spectral_rolloff_mean",
-      "source_auc": 0.7108347569317512,
-      "source_abs_auc": 0.7108347569317512
+      "source_auc": 0.7022594256158976,
+      "source_abs_auc": 0.7022594256158976
+    },
+    {
+      "feature": "mfcc_0_mean",
+      "source_auc": 0.7015533551109296,
+      "source_abs_auc": 0.7015533551109296
     },
     {
       "feature": "spectral_centroid_mean",
-      "source_auc": 0.694089290253068,
-      "source_abs_auc": 0.694089290253068
+      "source_auc": 0.6903583095140874,
+      "source_abs_auc": 0.6903583095140874
     },
     {
       "feature": "zcr_mean",
-      "source_auc": 0.6427663310451118,
-      "source_abs_auc": 0.6427663310451118
-    },
-    {
-      "feature": "mfcc_1_std",
-      "source_auc": 0.3615786398466463,
-      "source_abs_auc": 0.6384213601533537
-    },
-    {
-      "feature": "mfcc_1_mean",
-      "source_auc": 0.3831197007456044,
-      "source_abs_auc": 0.6168802992543956
+      "source_auc": 0.6579768953314277,
+      "source_abs_auc": 0.6579768953314277
     },
     {
       "feature": "mfcc_9_std",
-      "source_auc": 0.6166686581854968,
-      "source_abs_auc": 0.6166686581854968
-    },
-    {
-      "feature": "mfcc_10_std",
-      "source_auc": 0.6112570011169383,
-      "source_abs_auc": 0.6112570011169383
+      "source_auc": 0.6424561045324622,
+      "source_abs_auc": 0.6424561045324622
     },
     {
       "feature": "mfcc_12_std",
-      "source_auc": 0.6109962471684146,
-      "source_abs_auc": 0.6109962471684146
+      "source_auc": 0.6256592827004219,
+      "source_abs_auc": 0.6256592827004219
     },
     {
       "feature": "key_is_minor",
-      "source_auc": 0.390660426461817,
-      "source_abs_auc": 0.609339573538183
-    },
-    {
-      "feature": "mfcc_6_std",
-      "source_auc": 0.5962594719504698,
-      "source_abs_auc": 0.5962594719504698
+      "source_auc": 0.37474479379338504,
+      "source_abs_auc": 0.625255206206615
     },
     {
       "feature": "mfcc_8_std",
-      "source_auc": 0.595727331368143,
-      "source_abs_auc": 0.595727331368143
+      "source_auc": 0.6203892745338233,
+      "source_abs_auc": 0.6203892745338233
+    },
+    {
+      "feature": "mfcc_6_std",
+      "source_auc": 0.6172289710085749,
+      "source_abs_auc": 0.6172289710085749
+    },
+    {
+      "feature": "mfcc_1_mean",
+      "source_auc": 0.38750510412413236,
+      "source_abs_auc": 0.6124948958758676
     },
     {
       "feature": "mfcc_11_std",
-      "source_auc": 0.595316200870665,
-      "source_abs_auc": 0.595316200870665
+      "source_auc": 0.6119674697155302,
+      "source_abs_auc": 0.6119674697155302
+    },
+    {
+      "feature": "mfcc_10_std",
+      "source_auc": 0.6109466448890704,
+      "source_abs_auc": 0.6109466448890704
     },
     {
       "feature": "zcr_std",
-      "source_auc": 0.5900671985709671,
-      "source_abs_auc": 0.5900671985709671
-    },
-    {
-      "feature": "mfcc_9_mean",
-      "source_auc": 0.5868308116991943,
-      "source_abs_auc": 0.5868308116991943
-    },
-    {
-      "feature": "chroma_mean",
-      "source_auc": 0.41570065345445817,
-      "source_abs_auc": 0.5842993465455418
-    },
-    {
-      "feature": "mfcc_10_mean",
-      "source_auc": 0.421051552321419,
-      "source_abs_auc": 0.578948447678581
+      "source_auc": 0.6095387573159112,
+      "source_abs_auc": 0.6095387573159112
     },
     {
       "feature": "mfcc_8_mean",
-      "source_auc": 0.4244492015865991,
-      "source_abs_auc": 0.575550798413401
+      "source_auc": 0.3962416632639172,
+      "source_abs_auc": 0.6037583367360828
+    },
+    {
+      "feature": "spectral_centroid_std",
+      "source_auc": 0.6023929835306927,
+      "source_abs_auc": 0.6023929835306927
+    },
+    {
+      "feature": "mfcc_6_mean",
+      "source_auc": 0.39981029671974955,
+      "source_abs_auc": 0.6001897032802505
+    },
+    {
+      "feature": "mfcc_1_std",
+      "source_auc": 0.40149465768340825,
+      "source_abs_auc": 0.5985053423165918
+    },
+    {
+      "feature": "chroma_mean",
+      "source_auc": 0.40175411732680005,
+      "source_abs_auc": 0.5982458826732
     }
   ],
   "qc": {
     "checks": {
-      "download_success_rate_ge_90pct": true,
+      "download_success_rate_ge_90pct": false,
       "feature_extraction_success_rate_ge_85pct": true,
       "duration_metadata_present": true,
       "median_analyzed_duration_25_to_31s": true,
       "max_archive_item_le_10": true,
       "max_artist_le_20_except_unknown": true,
       "unknown_artist_le_50": true,
-      "source_separability_auc_lt_80pct": false
+      "source_separability_auc_lt_80pct": false,
+      "quality_format_source_auc_lt_80pct": false
     },
     "audio_qc": {
       "median_duration_seconds": 30.0,
       "median_analyzed_duration_seconds": 30.0,
-      "duration_under_30_seconds_rows": 74
+      "duration_under_30_seconds_rows": 19,
+      "analyzed_duration_under_25_seconds_rows": 18
     },
     "source_bias": {
-      "source_separability_auc": 0.9493181663984868,
-      "source_separability_auc_audio_features": 0.9493181663984868,
-      "source_separability_auc_all_numeric": 0.9999303812273359,
+      "source_separability_auc": 0.9377827868852459,
+      "source_separability_auc_audio_features": 0.9377827868852459,
+      "source_separability_auc_all_numeric": 0.9990819672131148,
       "audio_feature_auc_excludes": [
         "duration_seconds",
         "analyzed_duration_seconds"
       ],
       "source_target_table": {
         "0": {
-          "archive_low_download": 1979,
+          "archive_low_download": 488,
           "charted": 0
         },
         "1": {
           "archive_low_download": 0,
-          "charted": 1996
+          "charted": 500
         }
       },
       "source_holdout_possible": false,
       "interpretation": "High AUC means source/domain artifacts may dominate popularity separation."
+    },
+    "audio_source_quality": {
+      "rows": 988,
+      "metadata_success_rate": 0.9989878542510121,
+      "source_separability_auc_all_quality_numeric": 1.0,
+      "source_separability_auc_format_only": 0.9981557377049181,
+      "all_quality_numeric_features": [
+        "file_size_bytes",
+        "metadata_duration_seconds",
+        "sample_rate_hz",
+        "channels",
+        "estimated_bitrate_kbps",
+        "bitrate_kbps"
+      ],
+      "format_only_numeric_features": [
+        "sample_rate_hz",
+        "channels",
+        "estimated_bitrate_kbps",
+        "bitrate_kbps"
+      ],
+      "by_source_summary": {
+        "archive_low_download": {
+          "file_size_bytes": {
+            "median": 5575973.5,
+            "p10": 1361277.3,
+            "p90": 18167690.5
+          },
+          "metadata_duration_seconds": {
+            "median": 229.48469387755102,
+            "p10": 75.37044897959184,
+            "p90": 558.1243356009078
+          },
+          "sample_rate_hz": {
+            "median": 44100.0,
+            "p10": 22050.0,
+            "p90": 44100.0
+          },
+          "channels": {
+            "median": 2.0,
+            "p10": 2.0,
+            "p90": 2.0
+          },
+          "estimated_bitrate_kbps": {
+            "median": 192.09287084542575,
+            "p10": 64.08033451058003,
+            "p90": 322.7687304079439
+          },
+          "bitrate_kbps": {
+            "median": 192.0,
+            "p10": 64.0,
+            "p90": 320.0
+          }
+        },
+        "charted": {
+          "file_size_bytes": {
+            "median": 721196.0,
+            "p10": 721196.0,
+            "p90": 721196.0
+          },
+          "metadata_duration_seconds": {
+            "median": 30.0,
+            "p10": 30.0,
+            "p90": 30.0
+          },
+          "sample_rate_hz": {
+            "median": 48000.0,
+            "p10": 48000.0,
+            "p90": 48000.0
+          },
+          "channels": {
+            "median": 2.0,
+            "p10": 2.0,
+            "p90": 2.0
+          },
+          "estimated_bitrate_kbps": {
+            "median": 192.31893333333332,
+            "p10": 192.31893333333332,
+            "p90": 192.31893333333332
+          }
+        }
+      },
+      "top_value_counts_by_source": {
+        "container_format": {
+          "archive_low_download": {
+            "MP3": 487,
+            "Unknown": 1
+          },
+          "charted": {
+            "MP3": 500
+          }
+        },
+        "codec_subtype": {
+          "archive_low_download": {
+            "MPEG_LAYER_III": 487,
+            "Unknown": 1
+          },
+          "charted": {
+            "MPEG_LAYER_III": 500
+          }
+        },
+        "bitrate_mode": {
+          "archive_low_download": {
+            "constant": 319,
+            "variable": 167,
+            "average": 1,
+            "Unknown": 1
+          },
+          "charted": {
+            "variable": 500
+          }
+        },
+        "mpeg_version": {
+          "archive_low_download": {
+            "MPEG 1.0": 428,
+            "MPEG 2.0": 55,
+            "MPEG 2.5": 4,
+            "Unknown": 1
+          },
+          "charted": {
+            "MPEG 1.0": 500
+          }
+        },
+        "mp3_mode": {
+          "archive_low_download": {
+            "joint stereo": 369,
+            "stereo": 102,
+            "mono": 15,
+            "dual channel": 1,
+            "Unknown": 1
+          },
+          "charted": {
+            "joint stereo": 500
+          }
+        }
+      }
     }
   }
 }

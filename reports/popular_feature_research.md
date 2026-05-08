@@ -5,43 +5,43 @@ Because charted tracks and Internet Archive low-download tracks come from differ
 
 ## Dataset Snapshot
 
-- Feature rows: 3975
-- Charted rows: 1996
-- Low-download rows: 1979
-- Feature extraction success rate: 0.9985
-- Audio feature source/domain AUC: 0.9488
-- Format-only source/domain AUC: 1.0000
-- Distance score ROC AUC: 0.8613
-- XGBoost OOF ROC AUC: 0.9535
+- Feature rows: 988
+- Charted rows: 500
+- Low-download rows: 488
+- Feature extraction success rate: 0.9980
+- Audio feature source/domain AUC: 0.9378
+- Format-only source/domain AUC: 0.9982
+- Distance score ROC AUC: 0.8623
+- XGBoost OOF ROC AUC: 0.9231
 
 ## Feature Profiles
 
 | Feature | Charted median | Charted q25 | Charted q75 | Top 20 median | 21-50 median | 51-100 median | Low-stream median |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Tempo | 117.454 | 99.384 | 135.999 | 117.454 | 117.454 | 117.454 | 117.454 |
-| RMS mean | 0.127 | 0.089 | 0.184 | 0.123 | 0.122 | 0.133 | 0.111 |
-| RMS std | 0.043 | 0.03 | 0.062 | 0.043 | 0.042 | 0.044 | 0.051 |
-| Chroma mean | 0.375 | 0.337 | 0.419 | 0.374 | 0.373 | 0.376 | 0.406 |
-| Chroma std | 0.296 | 0.289 | 0.302 | 0.296 | 0.296 | 0.296 | 0.295 |
-| Tonnetz mean | 0.008 | -0.011 | 0.03 | 0.008 | 0.007 | 0.009 | 0.006 |
-| Tonnetz std | 0.143 | 0.114 | 0.176 | 0.142 | 0.144 | 0.144 | 0.126 |
-| ZCR std | 0.05 | 0.039 | 0.064 | 0.052 | 0.051 | 0.049 | 0.042 |
-| Mfcc 11 Std | 7.753 | 6.87 | 8.744 | 7.813 | 7.713 | 7.746 | 7.131 |
-| Mfcc 1 Std | 26.847 | 22.287 | 32.843 | 27.632 | 26.67 | 26.343 | 32.851 |
-| Mfcc 12 Std | 7.556 | 6.717 | 8.63 | 7.525 | 7.473 | 7.662 | 6.876 |
+| Tempo | 117.454 | 99.384 | 135.999 | 117.454 | 112.347 | 117.454 | 117.454 |
+| RMS mean | 0.121 | 0.09 | 0.177 | 0.116 | 0.132 | 0.124 | 0.114 |
+| RMS std | 0.044 | 0.033 | 0.06 | 0.042 | 0.045 | 0.043 | 0.053 |
+| Chroma mean | 0.373 | 0.338 | 0.411 | 0.379 | 0.373 | 0.371 | 0.403 |
+| Chroma std | 0.296 | 0.29 | 0.303 | 0.296 | 0.296 | 0.297 | 0.295 |
+| Tonnetz mean | 0.006 | -0.01 | 0.029 | 0.009 | 0.003 | 0.008 | 0.007 |
+| Tonnetz std | 0.146 | 0.117 | 0.179 | 0.142 | 0.144 | 0.149 | 0.124 |
+| ZCR std | 0.05 | 0.037 | 0.066 | 0.049 | 0.052 | 0.048 | 0.04 |
+| Mfcc 10 Std | 8.299 | 7.314 | 9.442 | 8.427 | 8.446 | 8.156 | 7.677 |
+| Mfcc 1 Std | 27.567 | 22.723 | 33.449 | 27.28 | 28.06 | 27.14 | 32.051 |
+| Mfcc 1 Mean | 93.145 | 77.101 | 110.747 | 92.523 | 92.074 | 93.581 | 110.314 |
 
 ## Key Distribution
 
 | Key | All tracks | Charted tracks |
 | --- | ---: | ---: |
-| C major | 322 | 161 |
-| F major | 285 | 163 |
-| A# major | 266 | 174 |
-| D# major | 217 | 133 |
-| G# minor | 195 | 87 |
-| D# minor | 195 | 70 |
-| G# major | 190 | 121 |
-| C minor | 185 | 62 |
+| A# major | 70 | 48 |
+| F major | 67 | 46 |
+| C major | 63 | 37 |
+| G# minor | 59 | 25 |
+| G# major | 58 | 34 |
+| D# major | 57 | 36 |
+| D# minor | 52 | 20 |
+| A# minor | 47 | 18 |
 
 ## Interpretation Caveats
 

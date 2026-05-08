@@ -32,9 +32,13 @@ def resolve_yt_dlp(yt_dlp):
     return None
 
 
+def normalize_manifest_path(path):
+    return os.path.normpath(str(path).replace("\\", os.sep))
+
+
 def run_download(row, yt_dlp_path, dry_run, yt_dlp):
     source_url = (row.get("source_url") or "").strip()
-    file_path = (row.get("file_path") or "").strip()
+    file_path = normalize_manifest_path((row.get("file_path") or "").strip())
     if not source_url or not file_path:
         return "skipped", row
 

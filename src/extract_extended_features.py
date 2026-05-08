@@ -32,6 +32,10 @@ def normalize_path(path):
     return os.path.normcase(os.path.abspath(path))
 
 
+def normalize_manifest_path(path):
+    return os.path.normpath(str(path).replace("\\", os.sep))
+
+
 def popularity_tier(peak_rank):
     if pd.isna(peak_rank):
         return "low_stream"
@@ -88,7 +92,7 @@ def load_low_stream_tracks(low_streams_csv, low_stream_threshold, chart_keys):
     skipped_missing_file = 0
 
     for _, row in low_df.iterrows():
-        path = str(row["file_path"]).strip()
+        path = normalize_manifest_path(row["file_path"]).strip()
         if not path or not os.path.exists(path):
             skipped_missing_file += 1
             continue

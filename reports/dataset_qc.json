@@ -1,102 +1,239 @@
 {
   "dataset": {
-    "rows_extracted": 3975,
+    "rows_extracted": 988,
     "target_counts": {
-      "0": 1979,
-      "1": 1996
+      "0": 488,
+      "1": 500
     },
     "label_source_counts": {
-      "charted": 1996,
-      "archive_low_download": 1979
+      "charted": 500,
+      "archive_low_download": 488
     },
     "popularity_tier_counts": {
-      "low_stream": 1979,
-      "chart_51_100": 926,
-      "top20": 541,
-      "chart_21_50": 529
+      "low_stream": 488,
+      "chart_51_100": 234,
+      "chart_21_50": 140,
+      "top20": 126
     }
   },
   "sample_manifest": {
-    "rows": 2000,
-    "unique_source_urls": 2000,
-    "unique_archive_items": 1485,
-    "unique_artists": 1191,
-    "max_per_archive_item": 10,
-    "max_per_artist": 50,
-    "unknown_artist_rows": 50
+    "rows": 500,
+    "unique_source_urls": 500,
+    "unique_archive_items": 452,
+    "unique_artists": 398,
+    "max_per_archive_item": 4,
+    "max_per_artist": 10,
+    "unknown_artist_rows": 10
   },
   "extraction": {
-    "attempts": 3981,
-    "failures": 6,
-    "success_rate": 0.9984928409947249,
-    "download_failures": 19,
-    "download_success_rate": 0.9905,
-    "expected_low_stream_rows": 2000,
-    "extracted_low_stream_rows": 1979,
-    "low_stream_extraction_rate": 0.9895
+    "attempts": 990,
+    "failures": 2,
+    "success_rate": 0.997979797979798,
+    "download_failures": 53,
+    "download_success_rate": 0.894,
+    "expected_low_stream_rows": 500,
+    "extracted_low_stream_rows": 488,
+    "low_stream_extraction_rate": 0.976
   },
   "audio_qc": {
     "median_duration_seconds": 30.0,
     "median_analyzed_duration_seconds": 30.0,
-    "duration_under_30_seconds_rows": 74
+    "duration_under_30_seconds_rows": 19,
+    "analyzed_duration_under_25_seconds_rows": 18
   },
   "source_bias": {
-    "source_separability_auc": 0.9493181663984868,
-    "source_separability_auc_audio_features": 0.9493181663984868,
-    "source_separability_auc_all_numeric": 0.9999303812273359,
+    "source_separability_auc": 0.9377827868852459,
+    "source_separability_auc_audio_features": 0.9377827868852459,
+    "source_separability_auc_all_numeric": 0.9990819672131148,
     "audio_feature_auc_excludes": [
       "duration_seconds",
       "analyzed_duration_seconds"
     ],
     "source_target_table": {
       "0": {
-        "archive_low_download": 1979,
+        "archive_low_download": 488,
         "charted": 0
       },
       "1": {
         "archive_low_download": 0,
-        "charted": 1996
+        "charted": 500
       }
     },
     "source_holdout_possible": false,
     "interpretation": "High AUC means source/domain artifacts may dominate popularity separation."
   },
+  "audio_source_quality": {
+    "rows": 988,
+    "metadata_success_rate": 0.9989878542510121,
+    "source_separability_auc_all_quality_numeric": 1.0,
+    "source_separability_auc_format_only": 0.9981557377049181,
+    "all_quality_numeric_features": [
+      "file_size_bytes",
+      "metadata_duration_seconds",
+      "sample_rate_hz",
+      "channels",
+      "estimated_bitrate_kbps",
+      "bitrate_kbps"
+    ],
+    "format_only_numeric_features": [
+      "sample_rate_hz",
+      "channels",
+      "estimated_bitrate_kbps",
+      "bitrate_kbps"
+    ],
+    "by_source_summary": {
+      "archive_low_download": {
+        "file_size_bytes": {
+          "median": 5575973.5,
+          "p10": 1361277.3,
+          "p90": 18167690.5
+        },
+        "metadata_duration_seconds": {
+          "median": 229.48469387755102,
+          "p10": 75.37044897959184,
+          "p90": 558.1243356009078
+        },
+        "sample_rate_hz": {
+          "median": 44100.0,
+          "p10": 22050.0,
+          "p90": 44100.0
+        },
+        "channels": {
+          "median": 2.0,
+          "p10": 2.0,
+          "p90": 2.0
+        },
+        "estimated_bitrate_kbps": {
+          "median": 192.09287084542575,
+          "p10": 64.08033451058003,
+          "p90": 322.7687304079439
+        },
+        "bitrate_kbps": {
+          "median": 192.0,
+          "p10": 64.0,
+          "p90": 320.0
+        }
+      },
+      "charted": {
+        "file_size_bytes": {
+          "median": 721196.0,
+          "p10": 721196.0,
+          "p90": 721196.0
+        },
+        "metadata_duration_seconds": {
+          "median": 30.0,
+          "p10": 30.0,
+          "p90": 30.0
+        },
+        "sample_rate_hz": {
+          "median": 48000.0,
+          "p10": 48000.0,
+          "p90": 48000.0
+        },
+        "channels": {
+          "median": 2.0,
+          "p10": 2.0,
+          "p90": 2.0
+        },
+        "estimated_bitrate_kbps": {
+          "median": 192.31893333333332,
+          "p10": 192.31893333333332,
+          "p90": 192.31893333333332
+        }
+      }
+    },
+    "top_value_counts_by_source": {
+      "container_format": {
+        "archive_low_download": {
+          "MP3": 487,
+          "Unknown": 1
+        },
+        "charted": {
+          "MP3": 500
+        }
+      },
+      "codec_subtype": {
+        "archive_low_download": {
+          "MPEG_LAYER_III": 487,
+          "Unknown": 1
+        },
+        "charted": {
+          "MPEG_LAYER_III": 500
+        }
+      },
+      "bitrate_mode": {
+        "archive_low_download": {
+          "constant": 319,
+          "variable": 167,
+          "average": 1,
+          "Unknown": 1
+        },
+        "charted": {
+          "variable": 500
+        }
+      },
+      "mpeg_version": {
+        "archive_low_download": {
+          "MPEG 1.0": 428,
+          "MPEG 2.0": 55,
+          "MPEG 2.5": 4,
+          "Unknown": 1
+        },
+        "charted": {
+          "MPEG 1.0": 500
+        }
+      },
+      "mp3_mode": {
+        "archive_low_download": {
+          "joint stereo": 369,
+          "stereo": 102,
+          "mono": 15,
+          "dual channel": 1,
+          "Unknown": 1
+        },
+        "charted": {
+          "joint stereo": 500
+        }
+      }
+    }
+  },
   "checks": {
-    "download_success_rate_ge_90pct": true,
+    "download_success_rate_ge_90pct": false,
     "feature_extraction_success_rate_ge_85pct": true,
     "duration_metadata_present": true,
     "median_analyzed_duration_25_to_31s": true,
     "max_archive_item_le_10": true,
     "max_artist_le_20_except_unknown": true,
     "unknown_artist_le_50": true,
-    "source_separability_auc_lt_80pct": false
+    "source_separability_auc_lt_80pct": false,
+    "quality_format_source_auc_lt_80pct": false
   },
   "by_source_summary": {
     "archive_low_download": {
       "duration_seconds": {
-        "median": 246.8724263038549,
-        "p10": 76.64921088435375,
-        "p90": 569.093514739229
+        "median": 229.03692743764174,
+        "p10": 75.4851156462585,
+        "p90": 555.905904761905
       },
       "tempo": {
         "median": 117.45383522727272,
         "p10": 80.74951171875,
-        "p90": 161.4990234375
+        "p90": 151.99908088235293
       },
       "rms_mean": {
-        "median": 0.1109906807541847,
-        "p10": 0.025443126633763302,
-        "p90": 0.2952335119247436
+        "median": 0.11434335634112355,
+        "p10": 0.03077120427042244,
+        "p90": 0.31912288069725037
       },
       "spectral_centroid_mean": {
-        "median": 1704.987370543887,
-        "p10": 694.1190236007914,
-        "p90": 3015.7116212517108
+        "median": 1661.4178806736018,
+        "p10": 635.6345991785865,
+        "p90": 3071.4672920718017
       },
       "spectral_bandwidth_mean": {
-        "median": 1923.6680443919315,
-        "p10": 917.8475375622656,
-        "p90": 2718.121770073577
+        "median": 1899.1942731709194,
+        "p10": 872.3044560069073,
+        "p90": 2762.132151026755
       }
     },
     "charted": {
@@ -108,22 +245,22 @@
       "tempo": {
         "median": 117.45383522727272,
         "p10": 86.1328125,
-        "p90": 161.4990234375
+        "p90": 151.99908088235293
       },
       "rms_mean": {
-        "median": 0.12724748253822327,
-        "p10": 0.06010640226304525,
-        "p90": 0.249975673854351
+        "median": 0.1213371679186821,
+        "p10": 0.05587090440094466,
+        "p90": 0.23699333518743512
       },
       "spectral_centroid_mean": {
-        "median": 2300.4955499666276,
-        "p10": 1613.4673847310978,
-        "p90": 2983.403455687124
+        "median": 2286.9775283771396,
+        "p10": 1555.9314656786826,
+        "p90": 3047.1831581062324
       },
       "spectral_bandwidth_mean": {
-        "median": 2418.3681838983734,
-        "p10": 1904.8616004547725,
-        "p90": 2842.30549336666
+        "median": 2415.201531020137,
+        "p10": 1874.0183931710985,
+        "p90": 2844.298284786154
       }
     }
   }
