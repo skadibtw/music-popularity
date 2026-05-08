@@ -311,6 +311,31 @@ class ResearchInsightsTest(unittest.TestCase):
         self.assertIn("source/domain", markdown)
         self.assertIn("| Tempo |", markdown)
 
+    def test_format_research_markdown_includes_data_roadmap(self):
+        summary = {
+            "snapshot": {
+                "feature_rows": 3,
+                "charted_rows": 2,
+                "low_download_rows": 1,
+                "source_auc": 0.9488,
+                "quality_source_auc": 1.0,
+            },
+            "feature_profiles": [],
+            "key_distribution": [],
+        }
+
+        markdown = format_research_markdown(summary)
+
+        self.assertIn("Data Roadmap", markdown)
+        self.assertIn("Internet Archive", markdown)
+        self.assertIn("yt-dlp", markdown)
+
+    def test_write_popular_feature_research_output_path_is_repo_anchored(self):
+        from src.write_popular_feature_research import OUTPUT_PATH
+
+        self.assertTrue(OUTPUT_PATH.is_absolute())
+        self.assertEqual(OUTPUT_PATH, PROJECT_ROOT / "reports/popular_feature_research.md")
+
 
 if __name__ == "__main__":
     unittest.main()
