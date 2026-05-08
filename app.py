@@ -10,6 +10,7 @@ from src.research_insights import (
     DEFAULT_QC_REPORT_PATH,
     build_dataset_snapshot,
     build_research_summary,
+    compare_track_to_reference,
     load_json_report,
 )
 from src.music_success_predictor import (
@@ -98,6 +99,26 @@ def score_band(score):
     if score >= 40:
         return "Middle range: some traits resemble the charted reference", "warning"
     return "Low similarity to the charted audio reference profile", "info"
+
+
+def render_feature_comparison(row, metadata, research_summary):
+    feature_frame = pd.DataFrame(research_summary.get("feature_profiles", []))
+    if feature_frame.empty:
+        feature_names = [name for name in ["tempo", "rms_mean", "chroma_mean", "tonnetz_mean", "zcr_std"] if name in row.columns]
+    else:
+        feature_names = feature_frame["feature"].dropna().astype(str).head(10).tolist()
+
+    comparisons = compare_track_to_reference(row, metadata, feature_names)
+    if not comparisons:
+        st.info("Feature comparison is unavailable for this track and metadata combination.")
+        return
+
+    comparison_df = pd.DataFrame(comparisons)
+    st.dataframe(
+        comparison_df[["label", "value", "reference_median", "reference_low", "reference_high", "status"]],
+        use_container_width=True,
+        hide_index=True,
+    )
 
 # --- Боковая панель ---
 with st.sidebar:
@@ -210,50 +231,54 @@ with analyze_tab:
                     model_percentile = score_percentile(raw_score, metadata)
                     score, charted_distance = charted_similarity_percentile(X, metadata)
                     distance, threshold, in_distribution = robust_feature_distance(X, metadata)
-                    pred = model.predict(X)[0]
 
-                    # --- РЕЗУЛЬТАТЫ ---
                     st.markdown("---")
-                    st.markdown(
-                        '<p class="big-font">Analysis Result</p>',
-                        unsafe_allow_html=True,
+                    st.subheader("Guided analysis report")
+
+                    band_text, band_type = score_band(score)
+                    score_cols = st.columns(3)
+                    score_cols[0].metric("Hit-likeness percentile", f"{score:.1f}%")
+                    score_cols[1].metric("XGBoost diagnostic percentile", f"{model_percentile:.1f}%")
+                    score_cols[2].metric("Charted-reference distance", f"{charted_distance:.2f}")
+
+                    st.progress(int(max(0, min(score, 100))))
+                    if band_type == "success":
+                        st.success(band_text)
+                    elif band_type == "warning":
+                        st.warning(band_text)
+                    else:
+                        st.info(band_text)
+
+                    if in_distribution:
+                        st.success(f"Reliability: within training feature range ({distance:.2f}/{threshold:.2f}).")
+                    else:
+                        st.warning(
+                            f"Low reliability: this track is far from the training feature range ({distance:.2f}/{threshold:.2f})."
+                        )
+
+                    st.caption(
+                        f"Raw XGBoost score: {raw_score * 100:.1f}%. "
+                        "The XGBoost signal is shown as a diagnostic model output, not as the headline score."
                     )
 
-                    col1, col2 = st.columns([1, 2])
-                    with col1:
-                        st.markdown(
-                            f'<div class="metric-value">{score:.1f}%</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.write("**Hit-likeness score**")
-                        st.progress(int(score))
-                        st.caption(
-                            f"Charted-reference distance: {charted_distance:.2f}; "
-                            f"XGBoost percentile: {model_percentile:.1f}%; raw model score: {raw_score * 100:.1f}%"
-                        )
+                    st.write("**Extracted audio profile**")
+                    audio_cols = st.columns(6)
+                    audio_cols[0].metric("BPM", f"{features['tempo']:.0f}")
+                    audio_cols[1].metric("Key", features["key"])
+                    audio_cols[2].metric("RMS mean", f"{features['rms_mean']:.3f}")
+                    audio_cols[3].metric("Chroma mean", f"{features.get('chroma_mean', 0):.3f}")
+                    audio_cols[4].metric("Tonnetz mean", f"{features.get('tonnetz_mean', 0):.3f}")
+                    audio_cols[5].metric("ZCR std", f"{features.get('zcr_std', 0):.3f}")
 
-                        message, status = score_band(score)
-                        getattr(st, status)(message)
-
-                        if in_distribution:
-                            st.caption(f"Reliability: within training feature range ({distance:.2f}/{threshold:.2f}).")
-                        else:
-                            st.warning(
-                                f"Low reliability: this track is far from the training feature range ({distance:.2f}/{threshold:.2f})."
-                            )
-
-                    with col2:
-                        st.write("**Audio Features:**")
-                        c1, c2, c3 = st.columns(3)
-                        c1.metric("BPM", f"{features['tempo']:.0f}")
-                        c2.metric("Key", features["key"])
-                        c3.metric("RMS Energy", f"{features['rms_mean']:.3f}")
+                    st.write("**Uploaded track vs charted reference band**")
+                    render_feature_comparison(row, metadata, research_summary)
 
                     # --- SHAP Анализ ---
                     st.markdown("---")
-                    st.markdown(
-                        '<p class="big-font">Feature Contributions</p>',
-                        unsafe_allow_html=True,
+                    st.subheader("Diagnostic model contributions")
+                    st.caption(
+                        "SHAP values explain the secondary XGBoost diagnostic model in its raw feature space. "
+                        "They are not causal production advice."
                     )
 
                     explainer = shap.TreeExplainer(model)
@@ -287,10 +312,14 @@ with analyze_tab:
                             "Increased score": "#2ca02c",
                             "Decreased score": "#ff4b4b",
                         },
-                        title="Top XGBoost feature contributions (SHAP)",
+                        title="Top diagnostic XGBoost feature contributions (SHAP)",
                     )
                     fig.update_layout(yaxis={"categoryorder": "total ascending"})
                     st.plotly_chart(fig, use_container_width=True)
+                    st.info(
+                        "Research context: the feature comparison is anchored to the current charted-reference dataset. "
+                        "Source/domain bias remains high, so treat this as exploratory audio similarity rather than a popularity forecast."
+                    )
 
                 # Удаляем временный файл
                 if os.path.exists(temp_path):
