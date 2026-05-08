@@ -14,6 +14,7 @@ This project analyzes local audio files and scores how similar they are to a wei
 - Shows SHAP explanations in the model's raw feature space.
 - Warns when an uploaded track is outside the training feature distribution.
 - Writes observability reports with dataset composition, validation metrics, score semantics, and feature importance.
+- Adds a concise research write-up on popular-reference audio features in `reports/popular_feature_research.md`.
 
 ## Important Limitation
 
@@ -52,6 +53,12 @@ The current low-popularity reference comes from Internet Archive netlabels track
 ## Quickstart
 
 Install dependencies, then build features and train:
+## Research Findings
+
+See `reports/popular_feature_research.md` for a compact, bias-aware study of the current dataset's popular-reference audio features. The report summarizes charted-reference medians and interquartile ranges for tempo, energy, chroma, tonnetz, zero-crossing variation, and top diagnostic MFCC features, then compares them with chart tiers and low-download reference tracks.
+
+The findings are intentionally phrased as dataset-specific. Current source/domain diagnostics still show strong technical mismatch between charted 30-second previews and low-download Internet Archive tracks, so the report should be read as exploratory EDA, not as a universal formula for popular songs.
+
 
 ```bash
 .venv_torch\Scripts\python.exe -m pip install yt-dlp
@@ -89,6 +96,7 @@ Training writes these files:
 - `plots/feature_importance_xgb.png`: top XGBoost feature importance chart.
 
 The reports include label-source counts, target base rate, holdout metrics, out-of-fold ROC-AUC, OOD distance threshold, source separability, QC checks, and top model features. Read these before interpreting any app score.
+- `reports/popular_feature_research.md`: bias-aware mini study of audio features in the current charted-reference dataset.
 
 ## Next Scientific Improvements
 
